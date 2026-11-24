@@ -1,7 +1,7 @@
 {
     "name": "buriti/i-educar-apps-api-package",
     "description": "API Apps pais/professores (TR 5.13+5.14) para o i-Educar 2.12.",
-    "version": "0.1.0",
+    "version": "0.3.0",
     "type": "library",
     "license": "GPL-2.0-or-later",
     "keywords": ["ieducar", "buriti", "laguna"],

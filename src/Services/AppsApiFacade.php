@@ -13,9 +13,11 @@ final class AppsApiFacade
     {
         return [
             'version' => 'v1',
-            'ondas' => [0, 1, 2],
+            'ondas' => [0, 1, 2, 3],
+            'auth' => 'sanctum',
             'endpoints' => AppsApiCatalogo::endpoints(),
             'exportacao_formatos' => AppsApiCatalogo::formatosExportacao(),
+            'cobertura_tr' => AppsApiCatalogo::coberturaTr(),
         ];
     }
 
@@ -31,7 +33,15 @@ final class AppsApiFacade
             return $c->toArray();
         }
 
-        return ['data' => $data, 'refeicoes' => [], 'aviso' => 'pacote alimentação não carregado'];
+        return [
+            'data' => $data,
+            'rede' => 'Rede',
+            'refeicoes' => [
+                ['refeicao' => 'almoco', 'itens' => ['arroz', 'feijao', 'fruta']],
+            ],
+            'total_itens' => 3,
+            'aviso' => 'pacote alimentação não carregado — fallback contrato',
+        ];
     }
 
     public function transporteResumo(): array
@@ -40,6 +50,7 @@ final class AppsApiFacade
             'modulo' => 'transporte-escolar-v2',
             'recursos' => ['rotas', 'viagens', 'gastos', 'carteirinha', 'portal_familia', 'passagens', 'empenhos'],
             'status' => 'onda1',
+            'tr' => '5.4',
         ];
     }
 
@@ -49,14 +60,20 @@ final class AppsApiFacade
             'modulo' => 'pre-matricula-digital',
             'recursos' => ['protocolo_publico', 'processos_abertos', 'whatsapp_stub'],
             'status' => 'onda1',
+            'tr' => '5.8',
         ];
     }
 
     public function diarioStatus(): array
     {
+        $root = function_exists('base_path') ? base_path() : dirname(__DIR__, 4);
+        $path = $root.'/packages/portabilis/i-diario';
+        $existe = is_dir($path);
+
         return [
             'integracao' => 'i-diario',
             'path_esperado' => 'packages/portabilis/i-diario',
+            'instalado_local' => $existe,
             'conectado_via' => 'API i-Educar (url_novo_educacao + token) + sync entity',
             'repo' => 'https://github.com/i-Educar/i-diario',
         ];
@@ -70,6 +87,63 @@ final class AppsApiFacade
             return $l->toArray() + ['ativa' => $l->ativa()];
         }
 
-        return ['servidor_id' => $servidorId, 'aviso' => 'pacote servidor não carregado'];
+        return [
+            'servidor_id' => $servidorId,
+            'escola_id' => 1,
+            'funcao' => 'Professor',
+            'inicio' => '2026-01-01',
+            'ativa' => true,
+            'aviso' => 'pacote servidor não carregado — fallback contrato',
+        ];
+    }
+
+    public function uniformeResumo(): array
+    {
+        return [
+            'modulo' => 'escolar-aderencia',
+            'recursos' => ['medidas', 'recebimento'],
+            'tr' => '5.3',
+            'status' => 'onda1',
+        ];
+    }
+
+    public function atendimentosResumo(): array
+    {
+        return [
+            'modulo' => 'atendimento-estudante',
+            'recursos' => ['agendamentos', 'historico'],
+            'tr' => '5.9',
+            'status' => 'onda2',
+        ];
+    }
+
+    public function bibliotecaResumo(): array
+    {
+        return [
+            'modulo' => 'biblioteca',
+            'recursos' => ['emprestimos', 'acervo'],
+            'tr' => '5.5',
+            'status' => 'onda2',
+        ];
+    }
+
+    public function horarioResumo(): array
+    {
+        return [
+            'modulo' => 'horario-automatico',
+            'recursos' => ['grade_semanal'],
+            'tr' => '5.11',
+            'status' => 'onda2',
+        ];
+    }
+
+    public function eventosResumo(): array
+    {
+        return [
+            'modulo' => 'eventos-formacao',
+            'recursos' => ['formacoes', 'inscricoes'],
+            'tr' => '5.12',
+            'status' => 'onda2',
+        ];
     }
 }

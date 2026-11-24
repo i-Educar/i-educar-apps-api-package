@@ -1,0 +1,300 @@
+openapi: 3.0.3
+info:
+  title: i-Educar Apps API (Laguna / PE-77)
+  description: |
+    Contrato único para apps Família (5.13) e Professor (5.14).
+    Auth: Laravel Sanctum (Bearer). Perfis via abilities do token: `familia` | `professor`.
+  version: 1.0.0
+  contact:
+    name: Buriti / i-Educar Laguna
+servers:
+  - url: /
+    description: Host do i-Educar
+tags:
+  - name: auth
+  - name: meta
+  - name: familia
+  - name: professor
+  - name: diario
+  - name: exportacao
+paths:
+  /api/apps/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: Login Sanctum
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [login, password, perfil]
+              properties:
+                login: { type: string }
+                password: { type: string, format: password }
+                perfil: { type: string, enum: [familia, professor] }
+                device_name: { type: string }
+      responses:
+        '200':
+          description: Token emitido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  token_type: { type: string, example: Bearer }
+                  perfil: { type: string }
+                  user: { type: object }
+        '401':
+          description: Credenciais inválidas
+  /api/apps/v1/auth/logout:
+    post:
+      tags: [auth]
+      security: [{ sanctum: [] }]
+      summary: Revoga token atual
+      responses:
+        '200':
+          description: OK
+  /api/apps/v1/auth/me:
+    get:
+      tags: [auth]
+      security: [{ sanctum: [] }]
+      summary: Usuário autenticado
+      responses:
+        '200':
+          description: Perfil do token
+  /api/apps/v1/catalogo:
+    get:
+      tags: [meta]
+      summary: Catálogo = rotas reais + cobertura TR
+      responses:
+        '200':
+          description: Catálogo JSON
+  /api/apps/v1/openapi.yaml:
+    get:
+      tags: [meta]
+      summary: Meta da spec OpenAPI
+      responses:
+        '200':
+          description: Ponteiro para docs/openapi-apps-v1.yaml
+  /api/apps/v1/exportacao/formatos:
+    get:
+      tags: [exportacao]
+      summary: Formatos TR 4.x
+      responses:
+        '200':
+          description: Lista de formatos
+  /api/apps/v1/diario/status:
+    get:
+      tags: [diario]
+      summary: Status integração i-Diário
+      responses:
+        '200':
+          description: Health/config
+  /api/apps/v1/familia/filhos:
+    get:
+      tags: [familia]
+      security: [{ sanctum: [] }]
+      summary: Filhos do responsável autenticado
+      responses:
+        '200':
+          description: Lista de alunos
+  /api/apps/v1/familia/filhos/{aluno}/frequencia:
+    get:
+      tags: [familia]
+      security: [{ sanctum: [] }]
+      summary: Frequência/faltas
+      parameters:
+        - name: aluno
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Faltas agregadas
+        '403':
+          description: Aluno não vinculado
+  /api/apps/v1/familia/filhos/{aluno}/notas:
+    get:
+      tags: [familia]
+      security: [{ sanctum: [] }]
+      summary: Notas/boletim
+      parameters:
+        - name: aluno
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Notas por componente
+  /api/apps/v1/familia/fila:
+    get:
+      tags: [familia]
+      security: [{ sanctum: [] }]
+      summary: Fila / pré-matrícula
+      responses:
+        '200':
+          description: Resumo
+  /api/apps/v1/familia/transporte:
+    get:
+      tags: [familia]
+      security: [{ sanctum: [] }]
+      summary: Transporte escolar
+      responses:
+        '200':
+          description: Resumo
+  /api/apps/v1/familia/cardapio:
+    get:
+      tags: [familia]
+      security: [{ sanctum: [] }]
+      summary: Cardápio do dia
+      parameters:
+        - name: data
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Cardápio
+  /api/apps/v1/familia/uniforme:
+    get:
+      tags: [familia]
+      security: [{ sanctum: [] }]
+      summary: Uniforme
+      responses:
+        '200':
+          description: Resumo
+  /api/apps/v1/familia/atendimentos:
+    get:
+      tags: [familia]
+      security: [{ sanctum: [] }]
+      summary: Atendimentos
+      responses:
+        '200':
+          description: Resumo
+  /api/apps/v1/familia/biblioteca:
+    get:
+      tags: [familia]
+      security: [{ sanctum: [] }]
+      summary: Biblioteca
+      responses:
+        '200':
+          description: Resumo
+  /api/apps/v1/professor/turmas:
+    get:
+      tags: [professor]
+      security: [{ sanctum: [] }]
+      summary: Turmas do professor
+      parameters:
+        - name: ano
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de turmas
+  /api/apps/v1/professor/chamada:
+    post:
+      tags: [professor]
+      security: [{ sanctum: [] }]
+      summary: Lançamento de chamada (fila idempotente)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [uuid, turma_id, data, lancamentos]
+              properties:
+                uuid: { type: string }
+                turma_id: { type: integer }
+                data: { type: string, format: date }
+                lancamentos:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      aluno_id: { type: integer }
+                      presente: { type: boolean }
+      responses:
+        '202':
+          description: Aceito na fila
+  /api/apps/v1/professor/notas:
+    post:
+      tags: [professor]
+      security: [{ sanctum: [] }]
+      summary: Lançamento de notas (fila idempotente)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [uuid, turma_id, componente_id, etapa, lancamentos]
+              properties:
+                uuid: { type: string }
+                turma_id: { type: integer }
+                componente_id: { type: integer }
+                etapa: { type: string }
+                lancamentos:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      aluno_id: { type: integer }
+                      nota: { type: number }
+      responses:
+        '202':
+          description: Aceito na fila
+  /api/apps/v1/professor/sync:
+    post:
+      tags: [professor]
+      security: [{ sanctum: [] }]
+      summary: Sync offline (eventos com uuid)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                eventos:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      uuid: { type: string }
+                      tipo: { type: string }
+                      payload: { type: object }
+      responses:
+        '200':
+          description: Processado
+  /api/apps/v1/professor/historico-funcional:
+    get:
+      tags: [professor]
+      security: [{ sanctum: [] }]
+      summary: Histórico/lotação resumida
+      responses:
+        '200':
+          description: Lotação
+  /api/apps/v1/professor/horario:
+    get:
+      tags: [professor]
+      security: [{ sanctum: [] }]
+      summary: Grade semanal
+      responses:
+        '200':
+          description: Resumo
+  /api/apps/v1/professor/eventos:
+    get:
+      tags: [professor]
+      security: [{ sanctum: [] }]
+      summary: Formações/eventos
+      responses:
+        '200':
+          description: Resumo
+components:
+  securitySchemes:
+    sanctum:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum

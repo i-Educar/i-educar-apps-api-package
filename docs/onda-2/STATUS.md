@@ -5,5 +5,6 @@
 - [x] Fachada (cardápio, transporte, fila, diário, lotação)  
 - [x] Testes `tests/run.php`  
 - [x] Roadmap Android `docs/ROADMAP-ANDROID.md`  
-- [ ] Sanctum auth middleware nas rotas protegidas (hardening Onda 3)  
-- [ ] Bindings reais a queries Eloquent/i-Diário (evolução contínua)  
+- [x] Sanctum auth middleware nas rotas protegidas → **Onda 3**  
+- [x] Bindings Eloquent filhos/frequência/notas/turmas → **Onda 3** (gravação chamada/notas via fila; i-Diário Onda 4)  
+
