@@ -1,14 +1,19 @@
-# API Apps pais/professores (TR 5.13+5.14)
+# Apps API — pais/professores (TR 5.13 + 5.14)
 
-Pacote Buriti para o i-Educar **2.12** (organização [i-Educar](https://github.com/i-Educar)).
+Pacote Buriti para o i-Educar **2.12**. Backend único (Sanctum) para os apps Android/iOS.
 
-Composer: `buriti/i-educar-apps-api-package`
+Repo: https://github.com/i-Educar/i-educar-apps-api-package
 
-## Documentos Laguna / PE-77/2026
+## Onda 2
 
-- `EPIC.md` · `ROADMAP.md` · `TODO.md` · `REQUISITOS-TR.md`
-- Padrão: `packages/buriti/PADRAO-PACOTE-2.12.md` (no monorepo)
+```bash
+php packages/buriti/i-educar-apps-api-package/tests/run.php
+# rotas: GET /api/apps/v1/catalogo
+```
 
-## Status
+- Roadmap Android: [`docs/ROADMAP-ANDROID.md`](./docs/ROADMAP-ANDROID.md)
+- Status: [`docs/onda-2/STATUS.md`](./docs/onda-2/STATUS.md)
 
-Scaffold inicial (documentação + ServiceProvider). Implementação segue a ordem em `ORDEM-DESENVOLVIMENTO-LAGUNA.md`.
+## Prefixo
+
+`/api/apps/v1/...` — catálogo, família (fila/transporte/cardápio), professor (turmas/sync/histórico), diário.
