@@ -4,6 +4,16 @@ Pacote Buriti para o i-Educar **2.12**. Backend único (**Sanctum**) para os app
 
 Repo: https://github.com/i-Educar/i-educar-apps-api-package
 
+## Compatibilidade
+
+| Produto | Versão |
+| --- | --- |
+| **i-Educar** | **2.12.x** (min. 2.12.0) |
+| **i-Diário** | Portabilis i-Diário (espelho Laguna) via API/SSO do core |
+| Pacote | `0.6.0` |
+
+Declarado em `composer.json` → `extra.ieducar` e `extra.idiario`.
+
 ## Onda 5 (atual — governança)
 
 ```bash

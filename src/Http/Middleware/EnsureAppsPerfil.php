@@ -32,7 +32,6 @@ class EnsureAppsPerfil
         return response()->json([
             'message' => 'Perfil insuficiente',
             'requer' => $perfis,
-            'abilities' => $abilities,
         ], 403);
     }
 }

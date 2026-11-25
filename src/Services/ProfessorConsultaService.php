@@ -85,6 +85,14 @@ final class ProfessorConsultaService
                 continue;
             }
 
+            $escopo = $this->validarEscopoEscrita($tipo, $payload, $servidorId);
+            if ($escopo !== null) {
+                $rejeitados++;
+                $itens[] = ['uuid' => $uuid, 'tipo' => $tipo, 'status' => 'rejeitado', 'motivo' => $escopo];
+
+                continue;
+            }
+
             $key = 'apps-api:sync:'.$uuid;
             if ($this->syncSeen($key, $uuid)) {
                 $duplicados++;
@@ -99,6 +107,63 @@ final class ProfessorConsultaService
         }
 
         return compact('aceitos', 'duplicados', 'rejeitados', 'itens', 'persistencia');
+    }
+
+    /**
+     * Chamada/notas só na turma do próprio servidor. Outros tipos passam sem turma.
+     *
+     * @return string|null motivo de rejeição
+     */
+    private function validarEscopoEscrita(string $tipo, mixed $payload, ?int $servidorId): ?string
+    {
+        if (! in_array($tipo, ['chamada', 'notas'], true)) {
+            return null;
+        }
+
+        $turmaId = (int) (is_array($payload) ? ($payload['turma_id'] ?? 0) : 0);
+        if ($turmaId <= 0) {
+            return 'turma_obrigatoria';
+        }
+
+        if ($servidorId === null || $servidorId <= 0) {
+            return 'servidor_obrigatorio';
+        }
+
+        if (! $this->temTabelaProfessorTurma()) {
+            // Ambiente de contrato / sem schema: aceita com turma_id presente
+            return null;
+        }
+
+        if (! $this->servidorTemTurma($servidorId, $turmaId)) {
+            return 'turma_fora_do_escopo';
+        }
+
+        return null;
+    }
+
+    public function servidorTemTurma(int $servidorId, int $turmaId, ?int $ano = null): bool
+    {
+        try {
+            $q = LegacySchoolClassTeacher::query()
+                ->where('servidor_id', $servidorId)
+                ->where('turma_id', $turmaId);
+            if ($ano !== null) {
+                $q->where('ano', $ano);
+            }
+
+            return $q->exists();
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    private function temTabelaProfessorTurma(): bool
+    {
+        try {
+            return Schema::hasTable('modules.professor_turma');
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     private function hasSyncTable(): bool

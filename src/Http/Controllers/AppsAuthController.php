@@ -3,26 +3,49 @@
 namespace iEducar\Packages\BuritiAppsApi\Http\Controllers;
 
 use App\User;
+use iEducar\Packages\BuritiAppsApi\Services\AppsConfigService;
 use iEducar\Packages\BuritiAppsApi\Services\AppsGovernancaService;
+use iEducar\Packages\BuritiAppsApi\Services\AppsPerfilElegibilidade;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AppsAuthController
 {
-    public function __construct(private readonly AppsGovernancaService $gov) {}
+    public function __construct(
+        private readonly AppsGovernancaService $gov,
+        private readonly AppsConfigService $config,
+        private readonly AppsPerfilElegibilidade $elegibilidade,
+    ) {}
 
     /**
      * Status público — o app Android consulta antes/depois do login.
      */
     public function status(): JsonResponse
     {
+        $perfis = [];
+        foreach (['familia', 'professor', 'admin'] as $perfil) {
+            if ($this->config->featureAtiva($perfil)) {
+                $perfis[] = $perfil;
+            }
+        }
+
+        $indisponiveis = [];
+        foreach ($this->config->avisosImpacto() as $aviso) {
+            $indisponiveis[] = [
+                'titulo' => $aviso['titulo'],
+                'corpo' => $aviso['corpo'],
+            ];
+        }
+
         return response()->json([
             'apps_habilitados' => $this->gov->appsHabilitados(),
             'require_login' => (bool) config('apps-api.require_login', true),
             'mensagem' => $this->gov->appsHabilitados() ? null : $this->gov->mensagemSuspensao(),
             'auth' => 'sanctum',
-            'perfis' => ['familia', 'professor', 'admin'],
+            'perfis' => $perfis,
+            'features' => $this->config->estadoAtual()['features'],
+            'indisponiveis' => $indisponiveis,
         ]);
     }
 
@@ -42,6 +65,17 @@ class AppsAuthController
             'device_name' => 'required|string|min:3|max:120',
         ]);
 
+        if (! $this->config->featureAtiva($data['perfil'])) {
+            $meta = AppsConfigService::FEATURES_META[$data['perfil']] ?? null;
+
+            return response()->json([
+                'message' => ($meta['rotulo'] ?? $data['perfil']).' está desabilitado na configuração da SME.',
+                'code' => 'apps_feature_disabled',
+                'feature' => $data['perfil'],
+                'indisponivel' => $meta['impacto'] ?? [],
+            ], 503);
+        }
+
         /** @var User|null $user */
         $user = User::query()
             ->whereHas('employee', static fn ($q) => $q->where('matricula', $data['login']))
@@ -55,20 +89,28 @@ class AppsAuthController
             return response()->json(['message' => 'Usuário suspenso ou inativo', 'code' => 'user_suspended'], 403);
         }
 
-        if ($data['perfil'] === 'admin' && (! method_exists($user, 'isAdmin') || ! $user->isAdmin())) {
-            return response()->json(['message' => 'Perfil admin negado', 'code' => 'forbidden_perfil'], 403);
+        $elegivel = $this->elegibilidade->avaliar($user, $data['perfil']);
+        if (! $elegivel['ok']) {
+            return response()->json([
+                'message' => $elegivel['message'] ?? 'Perfil negado',
+                'code' => $elegivel['code'] ?? 'forbidden_perfil',
+            ], 403);
         }
 
-        // Um dispositivo = um token apps ativo por perfil (revoga anteriores do mesmo device)
+        // Nome canônico: apps-{perfil}-{device} — monitor/bloqueio filtram por apps-%
+        $tokenName = 'apps-'.$data['perfil'].'-'.$data['device_name'];
         if (method_exists($user, 'tokens')) {
             $user->tokens()
-                ->where('name', $data['device_name'])
+                ->where(function ($q) use ($tokenName, $data): void {
+                    $q->where('name', $tokenName)
+                        ->orWhere('name', $data['device_name']); // legado sem prefixo
+                })
                 ->delete();
         }
 
         $ttl = (int) config('apps-api.token_ttl_minutes', 60 * 24 * 30);
         $expires = $ttl > 0 ? now()->addMinutes($ttl) : null;
-        $token = $user->createToken($data['device_name'], [$data['perfil']], $expires);
+        $token = $user->createToken($tokenName, [$data['perfil']], $expires);
 
         return response()->json([
             'token' => $token->plainTextToken,
@@ -116,13 +158,13 @@ class AppsAuthController
             $abilities = $user->currentAccessToken()->abilities ?? [];
         }
 
+        // Privacidade: só dados do próprio usuário + perfil do token atual
         return response()->json([
             'id' => $user->id,
             'nome' => $user->name,
             'login' => $user->login,
             'email' => $user->email,
             'perfil' => $abilities[0] ?? null,
-            'abilities' => $abilities,
             'ativo' => $this->gov->usuarioPodeUsarApp($user),
             'apps_habilitados' => $this->gov->appsHabilitados(),
         ]);

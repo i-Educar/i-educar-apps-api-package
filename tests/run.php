@@ -37,7 +37,11 @@ $assert(str_contains($routesFile, 'EnsureAppsApiEnabled'), 'middleware apps enab
 $assert(str_contains($routesFile, 'EnsureAppsUserActive'), 'middleware usuário ativo');
 $assert(str_contains($routesFile, 'auth:sanctum'), 'middleware sanctum');
 $assert(str_contains($routesFile, "EnsureAppsPerfil::class.':admin'"), 'middleware perfil admin');
+$assert(str_contains($routesFile, 'throttle:10,1'), 'login com rate limit');
 $assert(str_contains($routesFile, 'device_name') === false, 'device_name validado no controller (não na rota)');
+$assert(is_file(__DIR__.'/../src/Services/AppsPerfilElegibilidade.php'), 'elegibilidade de perfil');
+$epsPii = array_filter(AppsApiCatalogo::endpoints(), static fn ($e) => ! empty($e['pii']));
+$assert(count($epsPii) >= 5, 'catálogo marca endpoints com PII');
 
 $cob = AppsApiCatalogo::coberturaTr();
 $assert($cob['percentual'] >= 85.0, 'cobertura TR ≥85% (got '.$cob['percentual'].'%)');
@@ -61,12 +65,13 @@ $assert(method_exists($gov, 'appsHabilitados'), 'governança appsHabilitados');
 $sync = new ProfessorConsultaService();
 try {
     $r1 = $sync->sync([
-        ['uuid' => 'onda5-uuid-1', 'tipo' => 'chamada', 'payload' => ['ok' => true]],
-        ['uuid' => 'onda5-uuid-1', 'tipo' => 'chamada'],
+        ['uuid' => 'onda5-uuid-1', 'tipo' => 'chamada', 'payload' => ['turma_id' => 1, 'ok' => true]],
+        ['uuid' => 'onda5-uuid-1', 'tipo' => 'chamada', 'payload' => ['turma_id' => 1]],
         ['uuid' => '', 'tipo' => 'x'],
-    ]);
-    $assert(($r1['aceitos'] ?? 0) >= 1, 'sync aceita 1º evento');
-    $assert(($r1['rejeitados'] ?? 0) >= 1, 'sync rejeita uuid vazio');
+        ['uuid' => 'onda5-uuid-sem-turma', 'tipo' => 'chamada', 'payload' => ['ok' => true]],
+    ], 99);
+    $assert(($r1['aceitos'] ?? 0) >= 1, 'sync aceita 1º evento com turma');
+    $assert(($r1['rejeitados'] ?? 0) >= 1, 'sync rejeita uuid vazio / sem turma');
 } catch (Throwable $e) {
     $assert(method_exists($sync, 'sync'), 'sync existe ('.$e->getMessage().')');
 }

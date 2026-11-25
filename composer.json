@@ -1,13 +1,15 @@
 {
     "name": "buriti/i-educar-apps-api-package",
     "description": "API Apps pais/professores (TR 5.13+5.14) para o i-Educar 2.12.",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "type": "library",
     "license": "GPL-2.0-or-later",
     "keywords": [
         "ieducar",
         "buriti",
-        "laguna"
+        "laguna",
+        "idiario",
+        "2.12"
     ],
     "authors": [
         {
@@ -34,7 +36,14 @@
         "ieducar": {
             "compatible": [
                 "2.12"
-            ]
+            ],
+            "min": "2.12.0",
+            "notes": "Alvo exclusivo i-Educar 2.12 (PHP ≥ 8.3, Illuminate ^11|^12|^13)."
+        },
+        "idiario": {
+            "compatible": true,
+            "via": "API i-Educar 2.12 + SSO (IdiarioPortal)",
+            "notes": "Compatível com Portabilis i-Diário no espelho Laguna; frequência/notas via sync do core."
         }
     },
     "config": {

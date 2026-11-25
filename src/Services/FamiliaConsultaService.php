@@ -8,7 +8,6 @@ use App\Models\LegacyRegistration;
 use App\Models\LegacyStudent;
 use App\Models\LegacyStudentAbsence;
 use App\User;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -187,8 +186,8 @@ final class FamiliaConsultaService
                 })
                 ->exists();
         } catch (Throwable) {
-            // ambiente sem schema completo: permite leitura contratual
-            return ! Schema::hasTable('pmieducar.aluno');
+            // Fail-closed: sem schema confiável, nega acesso a dados do aluno
+            return false;
         }
     }
 }

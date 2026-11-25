@@ -2,10 +2,12 @@
 
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsAdminController;
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsAuthController;
+use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsBuscaAtivaController;
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsCatalogoController;
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsFamiliaController;
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsProfessorController;
 use iEducar\Packages\BuritiAppsApi\Http\Middleware\EnsureAppsApiEnabled;
+use iEducar\Packages\BuritiAppsApi\Http\Middleware\EnsureAppsFeature;
 use iEducar\Packages\BuritiAppsApi\Http\Middleware\EnsureAppsPerfil;
 use iEducar\Packages\BuritiAppsApi\Http\Middleware\EnsureAppsUserActive;
 use Illuminate\Support\Facades\Route;
@@ -16,9 +18,11 @@ Route::prefix('api/apps/v1')->group(function (): void {
     Route::get('openapi.yaml', [AppsCatalogoController::class, 'openapi']);
 
     Route::middleware(EnsureAppsApiEnabled::class)->group(function (): void {
-        Route::post('auth/login', [AppsAuthController::class, 'login']);
+        // Rate limit: mitiga força bruta no login Sanctum dos apps
+        Route::post('auth/login', [AppsAuthController::class, 'login'])
+            ->middleware('throttle:10,1');
 
-        Route::middleware(['auth:sanctum', EnsureAppsUserActive::class])->group(function (): void {
+        Route::middleware(['auth:sanctum', EnsureAppsUserActive::class, EnsureAppsFeature::class])->group(function (): void {
             Route::post('auth/logout', [AppsAuthController::class, 'logout']);
             Route::post('auth/logout-all', [AppsAuthController::class, 'logoutAll']);
             Route::get('auth/me', [AppsAuthController::class, 'me']);
@@ -34,9 +38,13 @@ Route::prefix('api/apps/v1')->group(function (): void {
                 Route::get('filhos', [AppsFamiliaController::class, 'filhos']);
                 Route::get('filhos/{aluno}/frequencia', [AppsFamiliaController::class, 'frequencia']);
                 Route::get('filhos/{aluno}/notas', [AppsFamiliaController::class, 'notas']);
+                Route::get('filhos/{aluno}/busca-ativa/alertas', [AppsBuscaAtivaController::class, 'alertasAluno']);
                 Route::get('uniforme', [AppsFamiliaController::class, 'uniforme']);
                 Route::get('atendimentos', [AppsFamiliaController::class, 'atendimentos']);
                 Route::get('biblioteca', [AppsFamiliaController::class, 'biblioteca']);
+                Route::get('busca-ativa/processos', [AppsBuscaAtivaController::class, 'processos']);
+                Route::get('busca-ativa/processos/{id}', [AppsBuscaAtivaController::class, 'processo'])->whereNumber('id');
+                Route::post('busca-ativa/processos/{id}/acompanhamento', [AppsBuscaAtivaController::class, 'acompanhamento'])->whereNumber('id');
             });
 
             Route::middleware(EnsureAppsPerfil::class.':professor')->prefix('professor')->group(function (): void {

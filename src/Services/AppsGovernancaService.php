@@ -59,6 +59,7 @@ final class AppsGovernancaService
 
     /**
      * Suspende usuário: inativa + revoga tokens Sanctum + sessões web.
+     * Na próxima request o listener AuthenticatedUser força logout web se a sessão file ainda existir.
      */
     public function suspenderUsuario(User $user, ?string $motivo = null): array
     {
@@ -81,21 +82,64 @@ final class AppsGovernancaService
             $user->save();
         }
 
+        $motivoFinal = $motivo ?: ($user->employee->motivo ?? 'Suspenso via apps-api');
         try {
             $user->employee->remember_token = null;
-            $user->employee->motivo = $motivo ?: ($user->employee->motivo ?? 'Suspenso via apps-api');
+            $user->employee->motivo = $motivoFinal;
             $user->employee->save();
         } catch (Throwable) {
             //
         }
 
-        return [
+        $result = [
             'usuario_id' => (int) $user->id,
             'login' => $user->login,
             'tokens_revogados' => $tokens,
             'sessoes_web_revogadas' => $sessoes,
             'ativo' => false,
+            'acesso_bloqueado' => true,
         ];
+
+        $this->registrarEvento('suspender_usuario', $motivoFinal, (int) $user->id, (string) $user->login, $result);
+
+        return $result;
+    }
+
+    /**
+     * @param  list<int>  $usuarioIds
+     * @return array{ok:int,falhas:list<array{id:int,erro:string}>,itens:list<array<string,mixed>>}
+     */
+    public function suspenderUsuarios(array $usuarioIds, ?string $motivo = null, ?User $ator = null): array
+    {
+        $escopo = app(AppsUsuarioEscopoService::class);
+        $ok = 0;
+        $falhas = [];
+        $itens = [];
+
+        foreach (array_unique(array_map('intval', $usuarioIds)) as $id) {
+            if ($id < 1) {
+                continue;
+            }
+            $user = User::query()->find($id);
+            if ($user === null) {
+                $falhas[] = ['id' => $id, 'erro' => 'nao_encontrado'];
+
+                continue;
+            }
+            if ($ator !== null && ! $escopo->podeGerenciar($ator, $user)) {
+                $falhas[] = ['id' => $id, 'erro' => 'fora_do_escopo'];
+
+                continue;
+            }
+            try {
+                $itens[] = $this->suspenderUsuario($user, $motivo);
+                $ok++;
+            } catch (Throwable $e) {
+                $falhas[] = ['id' => $id, 'erro' => $e->getMessage()];
+            }
+        }
+
+        return compact('ok', 'falhas', 'itens');
     }
 
     public function reativarUsuario(User $user): array
@@ -106,11 +150,15 @@ final class AppsGovernancaService
         $user->ativo = 1;
         $user->save();
 
-        return [
+        $result = [
             'usuario_id' => (int) $user->id,
             'login' => $user->login,
             'ativo' => true,
         ];
+
+        $this->registrarEvento('reativar_usuario', 'Usuário reativado', (int) $user->id, (string) $user->login, $result);
+
+        return $result;
     }
 
     /**
@@ -123,12 +171,16 @@ final class AppsGovernancaService
 
         $revogados = $this->revogarTodosTokensApps();
 
-        return [
+        $result = [
             'apps_habilitados' => false,
             'active_on_ieducar' => false,
             'tokens_apps_revogados' => $revogados,
             'mensagem' => $mensagem ?: $this->mensagemSuspensao(),
         ];
+
+        $this->registrarEvento('bloquear_municipio', $result['mensagem'], null, null, $result);
+
+        return $result;
     }
 
     public function liberarMunicipio(): array
@@ -136,10 +188,76 @@ final class AppsGovernancaService
         $this->definirActiveOnIeducar(true);
         Config::set('apps-api.enabled', true);
 
-        return [
+        $result = [
             'apps_habilitados' => true,
             'active_on_ieducar' => true,
         ];
+
+        $this->registrarEvento('liberar_municipio', 'Município liberado para apps', null, null, $result);
+
+        return $result;
+    }
+
+    public function revogarToken(int $tokenId): bool
+    {
+        if (! Schema::hasTable('personal_access_tokens')) {
+            return false;
+        }
+
+        $row = DB::table('personal_access_tokens')
+            ->where('id', $tokenId)
+            ->where(function ($q): void {
+                $q->where('name', 'like', 'apps-%')
+                    ->orWhere('tokenable_type', 'like', '%User');
+            })
+            ->first();
+
+        if ($row === null) {
+            return false;
+        }
+
+        DB::table('personal_access_tokens')->where('id', $tokenId)->delete();
+
+        $this->registrarEvento(
+            'revogar_token',
+            'Token #'.$tokenId.' ('.$row->name.')',
+            (int) $row->tokenable_id,
+            null,
+            ['token_id' => $tokenId, 'name' => $row->name]
+        );
+
+        return true;
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    public function registrarEvento(
+        string $acao,
+        ?string $detalhe = null,
+        ?int $alvoUsuarioId = null,
+        ?string $alvoLogin = null,
+        array $meta = [],
+    ): void {
+        if (! Schema::hasTable('apps_api.evento_governanca')) {
+            return;
+        }
+
+        try {
+            $ator = auth()->user();
+            DB::table('apps_api.evento_governanca')->insert([
+                'acao' => $acao,
+                'ator_id' => $ator?->getAuthIdentifier(),
+                'ator_login' => $ator?->login,
+                'alvo_usuario_id' => $alvoUsuarioId,
+                'alvo_login' => $alvoLogin,
+                'detalhe' => $detalhe !== null ? mb_substr($detalhe, 0, 500) : null,
+                'meta' => $meta !== [] ? json_encode($meta, JSON_UNESCAPED_UNICODE) : null,
+                'created_at' => now(),
+            ]);
+        } catch (Throwable) {
+            //
+        }
     }
 
     public function revogarTodosTokensApps(): int
@@ -149,8 +267,12 @@ final class AppsGovernancaService
         }
 
         try {
+            // Preferência: prefixo apps-; também remove tokens Sanctum de User (legado sem prefixo).
             return (int) DB::table('personal_access_tokens')
-                ->where('name', 'like', 'apps-%')
+                ->where(function ($q): void {
+                    $q->where('name', 'like', 'apps-%')
+                        ->orWhere('tokenable_type', 'like', '%User');
+                })
                 ->delete();
         } catch (Throwable) {
             return 0;
@@ -159,15 +281,20 @@ final class AppsGovernancaService
 
     private function apagarSessoesWeb(int $userId): int
     {
-        if (! Schema::hasTable('sessions')) {
-            return 0;
+        $apagadas = 0;
+
+        if (Schema::hasTable('sessions')) {
+            try {
+                $apagadas += (int) DB::table('sessions')->where('user_id', $userId)->delete();
+            } catch (Throwable) {
+                //
+            }
         }
 
-        try {
-            return (int) DB::table('sessions')->where('user_id', $userId)->delete();
-        } catch (Throwable) {
-            return 0;
-        }
+        // SESSION_DRIVER=file não indexa por user_id; o bloqueio efetivo web vem de
+        // User::disable() + AuthenticatedUser (logout se inativo na próxima request).
+
+        return $apagadas;
     }
 
     private function definirActiveOnIeducar(bool $ativo, ?string $mensagem = null): void

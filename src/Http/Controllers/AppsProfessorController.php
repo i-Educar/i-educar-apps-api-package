@@ -25,9 +25,10 @@ class AppsProfessorController
 
     public function historico(Request $request, AppsApiFacade $api): JsonResponse
     {
-        $id = (int) $request->query('servidor_id', $request->user()->id);
+        // Privacidade: token professor só vê o próprio servidor (sem cross-read via query)
+        $id = (int) $request->user()->id;
 
-        return response()->json($api->lotacaoResumo($id > 0 ? $id : (int) $request->user()->id));
+        return response()->json($api->lotacaoResumo($id));
     }
 
     public function sync(Request $request, ProfessorConsultaService $svc): JsonResponse
@@ -62,6 +63,15 @@ class AppsProfessorController
             'payload' => $payload,
         ]], (int) $request->user()->id);
 
+        if ($this->syncForaDoEscopo($result)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Turma fora do escopo do professor',
+                'code' => 'turma_fora_do_escopo',
+                'sync' => $result,
+            ], 403);
+        }
+
         return response()->json([
             'ok' => ($result['aceitos'] ?? 0) > 0 || ($result['duplicados'] ?? 0) > 0,
             'sync' => $result,
@@ -87,6 +97,15 @@ class AppsProfessorController
             'payload' => $payload,
         ]], (int) $request->user()->id);
 
+        if ($this->syncForaDoEscopo($result)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Turma fora do escopo do professor',
+                'code' => 'turma_fora_do_escopo',
+                'sync' => $result,
+            ], 403);
+        }
+
         return response()->json([
             'ok' => ($result['aceitos'] ?? 0) > 0 || ($result['duplicados'] ?? 0) > 0,
             'sync' => $result,
@@ -94,13 +113,35 @@ class AppsProfessorController
         ], 202);
     }
 
-    public function horario(AppsApiFacade $api): JsonResponse
+    public function horario(Request $request, AppsApiFacade $api, ProfessorConsultaService $svc): JsonResponse
     {
-        return response()->json($api->horarioResumo());
+        $turmas = $svc->turmas($request->user());
+
+        return response()->json($api->horarioResumo() + [
+            'escopo' => 'professor',
+            'turmas_vinculadas' => array_map(static fn (array $t): int => (int) $t['turma_id'], $turmas),
+        ]);
     }
 
-    public function eventos(AppsApiFacade $api): JsonResponse
+    public function eventos(Request $request, AppsApiFacade $api, ProfessorConsultaService $svc): JsonResponse
     {
-        return response()->json($api->eventosResumo());
+        $turmas = $svc->turmas($request->user());
+
+        return response()->json($api->eventosResumo() + [
+            'escopo' => 'professor',
+            'turmas_vinculadas' => array_map(static fn (array $t): int => (int) $t['turma_id'], $turmas),
+        ]);
+    }
+
+    /** @param array{itens?:list<array<string,mixed>>} $result */
+    private function syncForaDoEscopo(array $result): bool
+    {
+        foreach ($result['itens'] ?? [] as $item) {
+            if (($item['motivo'] ?? '') === 'turma_fora_do_escopo') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

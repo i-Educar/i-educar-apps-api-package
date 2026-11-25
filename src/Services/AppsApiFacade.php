@@ -72,12 +72,11 @@ final class AppsApiFacade
         $path = $root.'/packages/portabilis/i-diario';
         $existe = is_dir($path);
 
+        // Sem path de filesystem nem detalhes de deploy (privacidade / superfície de ataque)
         return [
             'integracao' => 'i-diario',
-            'path_esperado' => 'packages/portabilis/i-diario',
-            'instalado_local' => $existe,
-            'conectado_via' => 'API i-Educar (url_novo_educacao + token) + sync entity',
-            'repo' => 'https://github.com/i-Educar/i-diario',
+            'disponivel' => $existe,
+            'conectado_via' => 'API i-Educar + sync',
         ];
     }
 

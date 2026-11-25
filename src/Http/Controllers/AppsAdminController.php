@@ -4,12 +4,16 @@ namespace iEducar\Packages\BuritiAppsApi\Http\Controllers;
 
 use App\User;
 use iEducar\Packages\BuritiAppsApi\Services\AppsGovernancaService;
+use iEducar\Packages\BuritiAppsApi\Services\AppsUsuarioEscopoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AppsAdminController
 {
-    public function __construct(private readonly AppsGovernancaService $gov) {}
+    public function __construct(
+        private readonly AppsGovernancaService $gov,
+        private readonly AppsUsuarioEscopoService $escopo,
+    ) {}
 
     public function suspenderUsuario(Request $request, int $usuario): JsonResponse
     {
@@ -17,9 +21,18 @@ class AppsAdminController
             'motivo' => 'nullable|string|max:255',
         ]);
 
+        /** @var User $ator */
+        $ator = $request->user();
+        if (! method_exists($ator, 'isAdmin') || ! $ator->isAdmin()) {
+            return response()->json(['message' => 'Perfil admin exigido', 'code' => 'forbidden'], 403);
+        }
+
         $user = User::query()->find($usuario);
         if ($user === null) {
             return response()->json(['message' => 'Usuário não encontrado'], 404);
+        }
+        if (! $this->escopo->podeGerenciar($ator, $user)) {
+            return response()->json(['message' => 'Fora do escopo', 'code' => 'fora_do_escopo'], 403);
         }
 
         $result = $this->gov->suspenderUsuario($user, $data['motivo'] ?? null);
@@ -27,8 +40,14 @@ class AppsAdminController
         return response()->json(['ok' => true] + $result);
     }
 
-    public function reativarUsuario(int $usuario): JsonResponse
+    public function reativarUsuario(Request $request, int $usuario): JsonResponse
     {
+        /** @var User $ator */
+        $ator = $request->user();
+        if (! method_exists($ator, 'isAdmin') || ! $ator->isAdmin()) {
+            return response()->json(['message' => 'Perfil admin exigido', 'code' => 'forbidden'], 403);
+        }
+
         $user = User::query()->find($usuario);
         if ($user === null) {
             return response()->json(['message' => 'Usuário não encontrado'], 404);
@@ -39,6 +58,12 @@ class AppsAdminController
 
     public function bloquearMunicipio(Request $request): JsonResponse
     {
+        /** @var User $ator */
+        $ator = $request->user();
+        if (! method_exists($ator, 'isAdmin') || ! $ator->isAdmin()) {
+            return response()->json(['message' => 'Somente admin bloqueia o município', 'code' => 'forbidden'], 403);
+        }
+
         $data = $request->validate([
             'mensagem' => 'nullable|string|max:500',
         ]);
@@ -46,8 +71,14 @@ class AppsAdminController
         return response()->json(['ok' => true] + $this->gov->bloquearMunicipio($data['mensagem'] ?? null));
     }
 
-    public function liberarMunicipio(): JsonResponse
+    public function liberarMunicipio(Request $request): JsonResponse
     {
+        /** @var User $ator */
+        $ator = $request->user();
+        if (! method_exists($ator, 'isAdmin') || ! $ator->isAdmin()) {
+            return response()->json(['message' => 'Somente admin libera o município', 'code' => 'forbidden'], 403);
+        }
+
         return response()->json(['ok' => true] + $this->gov->liberarMunicipio());
     }
 

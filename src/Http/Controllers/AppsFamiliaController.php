@@ -9,21 +9,36 @@ use Illuminate\Http\Request;
 
 class AppsFamiliaController
 {
-    public function cardapio(Request $request, AppsApiFacade $api): JsonResponse
+    public function cardapio(Request $request, AppsApiFacade $api, FamiliaConsultaService $svc): JsonResponse
     {
         $data = (string) $request->query('data', date('Y-m-d'));
+        $filhos = $svc->filhos($request->user());
 
-        return response()->json($api->cardapioDemo($data));
+        return response()->json($api->cardapioDemo($data) + [
+            'escopo' => 'familia',
+            'alunos_vinculados' => array_map(static fn (array $f): int => (int) $f['aluno_id'], $filhos),
+        ]);
     }
 
-    public function transporte(AppsApiFacade $api): JsonResponse
+    public function transporte(Request $request, AppsApiFacade $api, FamiliaConsultaService $svc): JsonResponse
     {
-        return response()->json($api->transporteResumo());
+        // Escopo família: resumo geral + filhos vinculados (não vaza matrículas de outros)
+        $filhos = $svc->filhos($request->user());
+
+        return response()->json($api->transporteResumo() + [
+            'escopo' => 'familia',
+            'alunos_vinculados' => array_map(static fn (array $f): int => (int) $f['aluno_id'], $filhos),
+        ]);
     }
 
-    public function fila(AppsApiFacade $api): JsonResponse
+    public function fila(Request $request, AppsApiFacade $api, FamiliaConsultaService $svc): JsonResponse
     {
-        return response()->json($api->filaResumo());
+        $filhos = $svc->filhos($request->user());
+
+        return response()->json($api->filaResumo() + [
+            'escopo' => 'familia',
+            'alunos_vinculados' => array_map(static fn (array $f): int => (int) $f['aluno_id'], $filhos),
+        ]);
     }
 
     public function filhos(Request $request, FamiliaConsultaService $svc): JsonResponse
@@ -55,18 +70,33 @@ class AppsFamiliaController
         return response()->json($result, $status === 403 ? 403 : 200);
     }
 
-    public function uniforme(AppsApiFacade $api): JsonResponse
+    public function uniforme(Request $request, AppsApiFacade $api, FamiliaConsultaService $svc): JsonResponse
     {
-        return response()->json($api->uniformeResumo());
+        $filhos = $svc->filhos($request->user());
+
+        return response()->json($api->uniformeResumo() + [
+            'escopo' => 'familia',
+            'alunos_vinculados' => array_map(static fn (array $f): int => (int) $f['aluno_id'], $filhos),
+        ]);
     }
 
-    public function atendimentos(AppsApiFacade $api): JsonResponse
+    public function atendimentos(Request $request, AppsApiFacade $api, FamiliaConsultaService $svc): JsonResponse
     {
-        return response()->json($api->atendimentosResumo());
+        $filhos = $svc->filhos($request->user());
+
+        return response()->json($api->atendimentosResumo() + [
+            'escopo' => 'familia',
+            'alunos_vinculados' => array_map(static fn (array $f): int => (int) $f['aluno_id'], $filhos),
+        ]);
     }
 
-    public function biblioteca(AppsApiFacade $api): JsonResponse
+    public function biblioteca(Request $request, AppsApiFacade $api, FamiliaConsultaService $svc): JsonResponse
     {
-        return response()->json($api->bibliotecaResumo());
+        $filhos = $svc->filhos($request->user());
+
+        return response()->json($api->bibliotecaResumo() + [
+            'escopo' => 'familia',
+            'alunos_vinculados' => array_map(static fn (array $f): int => (int) $f['aluno_id'], $filhos),
+        ]);
     }
 }
