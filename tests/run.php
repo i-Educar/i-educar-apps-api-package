@@ -73,10 +73,12 @@ try {
     $assert(($r1['aceitos'] ?? 0) >= 1, 'sync aceita 1º evento');
     $assert(($r1['duplicados'] ?? 0) >= 1 || ($r1['aceitos'] ?? 0) >= 1, 'sync trata idempotência ou aceita');
     $assert(($r1['rejeitados'] ?? 0) >= 1, 'sync rejeita uuid vazio');
+    $assert(isset($r1['persistencia']), 'sync declara persistencia');
 } catch (Throwable $e) {
     // sem container Laravel Cache — valida apenas assinatura
     $assert(method_exists($sync, 'sync'), 'ProfessorConsultaService::sync existe ('.$e->getMessage().')');
 }
+$assert(is_file(__DIR__.'/../database/migrations/2026_11_24_210001_create_apps_api_professor_sync.php'), 'migration sync apps_api');
 
 $openapi = __DIR__.'/../docs/openapi-apps-v1.yaml';
 $assert(is_file($openapi), 'OpenAPI yaml presente');

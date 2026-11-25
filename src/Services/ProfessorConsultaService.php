@@ -5,6 +5,8 @@ namespace iEducar\Packages\BuritiAppsApi\Services;
 use App\Models\LegacySchoolClassTeacher;
 use App\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
@@ -50,17 +52,19 @@ final class ProfessorConsultaService
     }
 
     /**
-     * Fila offline idempotente (uuid por evento).
+     * Fila offline idempotente (uuid por evento) — persiste em apps_api quando schema existe.
      *
      * @param  list<array{uuid?:string,tipo?:string,payload?:mixed}>  $eventos
-     * @return array{aceitos:int,duplicados:int,rejeitados:int,itens:list<array<string,mixed>>}
+     * @param  int|null  $servidorId
+     * @return array{aceitos:int,duplicados:int,rejeitados:int,itens:list<array<string,mixed>>,persistencia:string}
      */
-    public function sync(array $eventos): array
+    public function sync(array $eventos, ?int $servidorId = null): array
     {
         $aceitos = 0;
         $duplicados = 0;
         $rejeitados = 0;
         $itens = [];
+        $persistencia = $this->hasSyncTable() ? 'apps_api.professor_sync_evento' : 'cache_memory';
 
         foreach ($eventos as $evento) {
             if (! is_array($evento)) {
@@ -72,6 +76,7 @@ final class ProfessorConsultaService
 
             $uuid = (string) ($evento['uuid'] ?? '');
             $tipo = (string) ($evento['tipo'] ?? '');
+            $payload = $evento['payload'] ?? $evento;
 
             if ($uuid === '' || $tipo === '') {
                 $rejeitados++;
@@ -81,25 +86,42 @@ final class ProfessorConsultaService
             }
 
             $key = 'apps-api:sync:'.$uuid;
-            if ($this->syncSeen($key)) {
+            if ($this->syncSeen($key, $uuid)) {
                 $duplicados++;
                 $itens[] = ['uuid' => $uuid, 'tipo' => $tipo, 'status' => 'duplicado'];
 
                 continue;
             }
 
-            $this->syncRemember($key, $tipo);
+            $this->syncRemember($key, $uuid, $tipo, $payload, $servidorId);
             $aceitos++;
             $itens[] = ['uuid' => $uuid, 'tipo' => $tipo, 'status' => 'aceito'];
         }
 
-        return compact('aceitos', 'duplicados', 'rejeitados', 'itens');
+        return compact('aceitos', 'duplicados', 'rejeitados', 'itens', 'persistencia');
     }
 
-    private function syncSeen(string $key): bool
+    private function hasSyncTable(): bool
+    {
+        try {
+            return Schema::hasTable('apps_api.professor_sync_evento');
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    private function syncSeen(string $key, string $uuid): bool
     {
         if (isset(self::$syncMemory[$key])) {
             return true;
+        }
+
+        if ($this->hasSyncTable()) {
+            try {
+                return DB::table('apps_api.professor_sync_evento')->where('uuid', $uuid)->exists();
+            } catch (Throwable) {
+                // fall through
+            }
         }
 
         try {
@@ -109,14 +131,31 @@ final class ProfessorConsultaService
         }
     }
 
-    private function syncRemember(string $key, string $tipo): void
+    private function syncRemember(string $key, string $uuid, string $tipo, mixed $payload, ?int $servidorId): void
     {
         self::$syncMemory[$key] = true;
+
+        if ($this->hasSyncTable()) {
+            try {
+                DB::table('apps_api.professor_sync_evento')->insert([
+                    'uuid' => $uuid,
+                    'tipo' => $tipo,
+                    'servidor_id' => $servidorId,
+                    'payload' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                    'status' => 'aceito',
+                    'created_at' => now(),
+                ]);
+
+                return;
+            } catch (Throwable) {
+                // fall through to cache
+            }
+        }
 
         try {
             Cache::put($key, ['tipo' => $tipo, 'at' => date('c')], 60 * 60 * 24 * 7);
         } catch (Throwable) {
-            // standalone / sem cache store
+            // standalone
         }
     }
 }

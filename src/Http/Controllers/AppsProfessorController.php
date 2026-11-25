@@ -37,10 +37,10 @@ class AppsProfessorController
             return response()->json(['message' => 'eventos deve ser array'], 422);
         }
 
-        $result = $svc->sync($eventos);
+        $result = $svc->sync($eventos, (int) $request->user()->id);
 
         return response()->json($result + [
-            'idempotencia' => 'uuid por evento (cache 7d)',
+            'idempotencia' => 'uuid por evento (DB apps_api ou cache 7d)',
             'status' => 'processed',
         ]);
     }
@@ -60,7 +60,7 @@ class AppsProfessorController
             'uuid' => $payload['uuid'],
             'tipo' => 'chamada',
             'payload' => $payload,
-        ]]);
+        ]], (int) $request->user()->id);
 
         return response()->json([
             'ok' => ($result['aceitos'] ?? 0) > 0 || ($result['duplicados'] ?? 0) > 0,
@@ -85,7 +85,7 @@ class AppsProfessorController
             'uuid' => $payload['uuid'],
             'tipo' => 'notas',
             'payload' => $payload,
-        ]]);
+        ]], (int) $request->user()->id);
 
         return response()->json([
             'ok' => ($result['aceitos'] ?? 0) > 0 || ($result['duplicados'] ?? 0) > 0,
