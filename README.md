@@ -4,19 +4,21 @@ Pacote Buriti para o i-Educar **2.12**. Backend único (**Sanctum**) para os app
 
 Repo: https://github.com/i-Educar/i-educar-apps-api-package
 
-## Onda 3 (atual)
+## Onda 5 (atual — governança)
 
 ```bash
 php packages/buriti/i-educar-apps-api-package/tests/run.php
-# públicos: GET /api/apps/v1/catalogo | /openapi.yaml | /diario/status
-# auth:    POST /api/apps/v1/auth/login  {login,password,perfil:familia|professor}
-# família: GET /api/apps/v1/familia/filhos (+ frequencia/notas/cardapio/…)
-# prof.:   GET /api/apps/v1/professor/turmas | POST chamada|notas|sync
+# público: GET  /api/apps/v1/auth/status
+# login:   POST /api/apps/v1/auth/login {login,password,perfil,device_name}
+# dados:   Bearer obrigatório (família/professor)
+# admin:   suspender usuário / bloquear município
+php artisan apps-api:suspender-usuario MATRICULA
+php artisan apps-api:bloquear-municipio --mensagem="..."
 ```
 
+- Onda 5: [`docs/onda-5/STATUS.md`](./docs/onda-5/STATUS.md)
 - OpenAPI: [`docs/openapi-apps-v1.yaml`](./docs/openapi-apps-v1.yaml)
-- Handoff lojas: [`docs/onda-3/HANDOFF-5.13-5.14.md`](./docs/onda-3/HANDOFF-5.13-5.14.md)
-- Status: [`docs/onda-3/STATUS.md`](./docs/onda-3/STATUS.md)
+- Handoff: [`docs/onda-3/HANDOFF-5.13-5.14.md`](./docs/onda-3/HANDOFF-5.13-5.14.md)
 - Roadmap Android: [`docs/ROADMAP-ANDROID.md`](./docs/ROADMAP-ANDROID.md)
 
 ## Prefixo

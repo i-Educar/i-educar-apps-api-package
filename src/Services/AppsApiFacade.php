@@ -13,8 +13,10 @@ final class AppsApiFacade
     {
         return [
             'version' => 'v1',
-            'ondas' => [0, 1, 2, 3],
+            'ondas' => [0, 1, 2, 3, 5],
             'auth' => 'sanctum',
+            'require_login' => (bool) (function_exists('config') ? config('apps-api.require_login', true) : true),
+            'apps_habilitados' => (bool) (function_exists('config') ? config('apps-api.enabled', true) : true),
             'endpoints' => AppsApiCatalogo::endpoints(),
             'exportacao_formatos' => AppsApiCatalogo::formatosExportacao(),
             'cobertura_tr' => AppsApiCatalogo::coberturaTr(),

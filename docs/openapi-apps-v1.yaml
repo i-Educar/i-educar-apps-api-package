@@ -33,7 +33,8 @@ paths:
                 login: { type: string }
                 password: { type: string, format: password }
                 perfil: { type: string, enum: [familia, professor] }
-                device_name: { type: string }
+                device_name: { type: string, minLength: 3 }
+                perfil_admin: { type: string, description: "admin exige isAdmin()" }
       responses:
         '200':
           description: Token emitido
@@ -292,6 +293,44 @@ paths:
       responses:
         '200':
           description: Resumo
+
+  /api/apps/v1/auth/status:
+    get:
+      tags: [auth]
+      summary: Status apps (município habilitado?)
+      responses:
+        '200':
+          description: apps_habilitados + require_login
+  /api/apps/v1/auth/logout-all:
+    post:
+      tags: [auth]
+      security: [{ sanctum: [] }]
+      summary: Revoga todos os tokens do usuário
+      responses:
+        '200':
+          description: OK
+  /api/apps/v1/admin/usuarios/{usuario}/suspender:
+    post:
+      tags: [auth]
+      security: [{ sanctum: [] }]
+      summary: Suspende usuário e revoga sessões app+web
+      parameters:
+        - name: usuario
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Suspenso
+  /api/apps/v1/admin/municipio/bloquear:
+    post:
+      tags: [auth]
+      security: [{ sanctum: [] }]
+      summary: Desliga município (apps + Suspender cliente)
+      responses:
+        '200':
+          description: Bloqueado
+
 components:
   securitySchemes:
     sanctum:
