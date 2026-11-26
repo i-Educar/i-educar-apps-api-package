@@ -37,6 +37,14 @@ class AppsApiServiceProvider extends ServiceProvider
         $this->app->singleton(AppsMonitorService::class);
         $this->app->singleton(FamiliaConsultaService::class);
         $this->app->singleton(ProfessorConsultaService::class);
+
+        // Fora de runningInConsole(): o check do Ambiente Laguna (HTTP) usa Artisan::all().
+        $this->commands([
+            SuspenderUsuarioCommand::class,
+            ReativarUsuarioCommand::class,
+            BloquearMunicipioCommand::class,
+            LiberarMunicipioCommand::class,
+        ]);
     }
 
     public function boot(): void
@@ -66,7 +74,7 @@ class AppsApiServiceProvider extends ServiceProvider
             'package' => self::PACKAGE,
             'titulo' => (string) config('apps-api.public.titulo', 'Apps API'),
             'descricao' => 'API Sanctum família/professor — configuração SME',
-            'url' => config('apps-api.public.url') ?: url('/apps-api/configuracao'),
+            'url' => config('apps-api.public.url') ?: url('/configuracoes/modulos?modulo=apps-api'),
             'icone' => Identidade::ICONE,
             'css_class' => 'public-module',
             'aparecer_na_home' => (bool) config('apps-api.public.aparecer_na_home', false),
@@ -88,13 +96,6 @@ class AppsApiServiceProvider extends ServiceProvider
         });
 
         if ($this->app->runningInConsole()) {
-            $this->commands([
-                SuspenderUsuarioCommand::class,
-                ReativarUsuarioCommand::class,
-                BloquearMunicipioCommand::class,
-                LiberarMunicipioCommand::class,
-            ]);
-
             if (\App\Support\Tenancy\PackageTenant::allows(self::PACKAGE)) {
                 $this->loadMigrationsFrom($root.'/database/migrations');
             }
