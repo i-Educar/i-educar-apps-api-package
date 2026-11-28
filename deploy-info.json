@@ -1,0 +1,9 @@
+{
+  "package": "i-educar-apps-api-package",
+  "composer": "buriti/i-educar-apps-api-package",
+  "version": "0.6.2",
+  "sha": "pending",
+  "full_sha": "pending",
+  "deployed_at": "2026-11-28T17:31:38Z",
+  "source": "github-actions"
+}
