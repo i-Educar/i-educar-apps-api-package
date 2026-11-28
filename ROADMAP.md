@@ -1,7 +1,7 @@
 # ROADMAP — APIs para Apps (família e professor)
 
 > Pacote: `buriti/i-educar-apps-api-package` · TR **5.13 + 5.14** · Prioridade **P0** · Nota **D/C** (lojas)  
-> Alinhado a `tmp/DOC-EXECUTIVO-PE-77-2026-LAGUNA-IEDUCAR.md`
+> Alinhado a `packages/buriti/docs/laguna/DOC-EXECUTIVO-PE-77-2026-LAGUNA-IEDUCAR.md`
 
 ## Visão
 

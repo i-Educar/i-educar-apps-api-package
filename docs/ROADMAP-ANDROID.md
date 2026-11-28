@@ -1,73 +1,47 @@
-# Roadmap — App Android ( Lagunas / PE-77/2026 )
+# Roadmap — App Android unificado (Laguna / PE-77/2026)
 
 **Backend:** `buriti/i-educar-apps-api-package` (`api/apps/v1`)  
-**UI nativa / lojas:** equipe externa (`5.13-LOJA` / `5.14-LOJA`) — este documento é o contrato de handoff.
+**Documento completo para a equipe mobile:** [`DOC-TECNICO-APP-ANDROID-UNIFICADO.md`](./DOC-TECNICO-APP-ANDROID-UNIFICADO.md)  
+**UI nativa / lojas:** equipe externa (`5.13-LOJA` / `5.14-LOJA`)  
+**Gate Buriti:** API + este DOC — **não** inclui criar o APK (`GATE-100-POC.md`)
 
 ## Princípios
 
-1. Um único backend Sanctum para **pais/responsáveis** e **professores**.  
-2. Offline-first no professor (fila `POST /professor/sync` idempotente).  
-3. Domínio vive nos pacotes Buriti / Portabilis / i-Diário — a API **orquestra**.  
-4. OpenAPI gerada a partir do catálogo (`GET /api/apps/v1/catalogo`).
+1. **Um APK** (equipe externa) com perfis Sanctum: `familia` · `professor` · `equipe` · `admin`.  
+2. Offline-first no professor (`POST /professor/sync` idempotente).  
+3. Equipe técnica: CameraX → QR almox → `POST /equipe/almox/confirmar`.  
+4. Domínio nos pacotes Buriti / Portabilis / i-Diário — a API **orquestra**.  
+5. OpenAPI / catálogo = fonte da verdade (`GET /catalogo`).
 
 ## Fases
 
-### A0 — Fundação (1–2 sprints)
+### A0 — Fundação *(especificação Buriti · implementação mobile externa)*
 
-| Item | Dependência | Status API |
-| --- | --- | --- |
-| Login / logout Sanctum | núcleo | contrato |
-| Catálogo + health | apps-api | **ok** |
-| Build flavors (homolog/prod) | mobile | handoff |
+Login, `auth/status`, flavors homolog/prod, tratamento 503/feature flags.
 
-### A1 — Família core (Onda 1)
+### A1 — Família (5.13) *(API Buriti · UI externa)*
 
-| Tela Android | Endpoint | Módulo |
-| --- | --- | --- |
-| Meus filhos | `GET /familia/filhos` | 5.3 |
-| Frequência | `GET /familia/filhos/{id}/frequencia` | 5.3 / i-Diário |
-| Notas | `GET /familia/filhos/{id}/notas` | 5.3 / i-Diário |
-| Fila / protocolo | `GET /familia/fila` | 5.8 |
-| Transporte | `GET /familia/transporte` | 5.4 |
-| Uniforme | `GET /familia/uniforme` | 5.3 |
+Filhos, frequência, notas, fila, transporte, uniforme, cardápio, atendimento, biblioteca, busca ativa.
 
-### A2 — Família Onda 2
+### A2 — Professor (5.14) *(API Buriti · UI externa)*
 
-| Tela | Endpoint | Módulo |
-| --- | --- | --- |
-| Cardápio do dia | `GET /familia/cardapio` | 5.2 |
-| Atendimentos | `GET /familia/atendimentos` | 5.9 |
-| Biblioteca | `GET /familia/biblioteca` | 5.5 |
+Turmas, chamada/notas, sync offline, histórico, horário, eventos, health i-Diário.
 
-### A3 — Professor
+### A3 — Equipe técnica (Onda 10) *(API Buriti · UI externa)*
 
-| Tela | Endpoint | Módulo |
-| --- | --- | --- |
-| Turmas | `GET /professor/turmas` | i-Diário |
-| Chamada | `POST /professor/chamada` + sync | i-Diário / 5.14 |
-| Notas | `POST /professor/notas` | i-Diário |
-| Sync offline | `POST /professor/sync` | 5.14 |
-| Histórico funcional | `GET /professor/historico-funcional` | 5.1 |
-| Horário | `GET /professor/horario` | 5.11 |
-| Eventos/formação | `GET /professor/eventos` | 5.12 |
+Painel, pedidos/notas almox, QR remessa, etiquetas, saldos, empréstimos, processos ACT.  
+Assinatura digital: abrir LibreSign na web (deep link).
 
-### A4 — Publicação lojas
+### A4 — Lojas *(somente equipe externa)*
 
-- Pacotes Android/iOS, ícones, privacidade, deep links de protocolo/fila.  
-- Sandbox de handoff + Postman/OpenAPI congelada.  
-- Evidências PoC ≥85% dos itens de **dados** 5.13/5.14.
+Play Console, privacidade, deep links, sandbox handoff.
 
-## Critérios de aceite mobile
+## Aceite mínimo
 
-- [ ] Login responsável lista filhos  
-- [ ] Frequência/notas batem com i-Diário/homolog  
-- [ ] Protocolo de fila consultável  
-- [ ] Cardápio do dia (com restrição)  
-- [ ] Professor lança chamada offline e sincroniza  
-- [ ] Histórico funcional resumido  
+Ver checklist §7 do [DOC técnico](./DOC-TECNICO-APP-ANDROID-UNIFICADO.md).
 
 ## Referências
 
-- Catálogo runtime: `GET /api/apps/v1/catalogo`  
-- `docs/onda-2/` dos pacotes de domínio  
-- i-Diário: https://github.com/i-Educar/i-diario  
+- Handoff: `docs/onda-3/HANDOFF-5.13-5.14.md`  
+- Status Onda 10: `packages/buriti/docs/onda-10/STATUS.md`  
+- OpenAPI: `docs/openapi-apps-v1.yaml`

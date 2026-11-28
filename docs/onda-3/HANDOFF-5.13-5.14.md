@@ -9,9 +9,10 @@
 
 ## Auth
 
-1. `POST /auth/login` com `{ login, password, perfil: "familia"|"professor" }`
+1. `POST /auth/login` com `{ login, password, perfil: "familia"|"professor"|"equipe"|"admin", device_name }`
 2. Usar `Authorization: Bearer {token}` nas rotas protegidas
 3. Ability do token = perfil; middleware rejeita cross-perfil (403)
+4. **App unificado (pais + professores + equipe):** ver [`DOC-TECNICO-APP-ANDROID-UNIFICADO.md`](../DOC-TECNICO-APP-ANDROID-UNIFICADO.md)
 
 ## Spec
 
@@ -35,6 +36,14 @@
 | professor | notas | POST | `/professor/notas` |
 | professor | sync offline | POST | `/professor/sync` |
 | professor | histórico | GET | `/professor/historico-funcional` |
+| equipe | painel | GET | `/equipe/painel` |
+| equipe | pedidos almox | GET | `/equipe/almox/pedidos` |
+| equipe | QR remessa | GET | `/equipe/almox/pedidos/{id}/qr` |
+| equipe | confirmar QR | POST | `/equipe/almox/confirmar` |
+| equipe | etiquetas | GET | `/equipe/almox/pedidos/{id}/etiquetas` |
+| equipe | saldos | GET | `/equipe/almox/saldos` |
+| equipe | biblioteca | GET | `/equipe/biblioteca/emprestimos` |
+| equipe | ACT | GET | `/equipe/contratacoes/processos` |
 
 ## Sandbox
 

@@ -74,7 +74,7 @@ class AppsApiServiceProvider extends ServiceProvider
             'package' => self::PACKAGE,
             'titulo' => (string) config('apps-api.public.titulo', 'Apps API'),
             'descricao' => 'API Sanctum família/professor — configuração SME',
-            'url' => config('apps-api.public.url') ?: url('/configuracoes/modulos?modulo=apps-api'),
+            'url' => config('apps-api.public.url') ?: url('/apps-api/configuracao'),
             'icone' => Identidade::ICONE,
             'css_class' => 'public-module',
             'aparecer_na_home' => (bool) config('apps-api.public.aparecer_na_home', false),

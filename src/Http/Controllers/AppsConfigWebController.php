@@ -18,22 +18,15 @@ class AppsConfigWebController extends Controller
     public function index(AppsConfigService $config, AppsGovernancaService $gov, AppsMonitorService $monitor): View
     {
         $estado = $config->estadoAtual();
-        $avisos = $config->avisosImpacto();
-        $funcoes = $config->funcoesComStatus();
-        $porGrupo = [];
-        foreach ($funcoes as $f) {
-            $porGrupo[$f['grupo']][] = $f;
-        }
 
         return view('apps-api::config', [
             'estado' => $estado,
-            'avisos' => $avisos,
-            'featuresMeta' => AppsConfigService::FEATURES_META,
-            'porGrupo' => $porGrupo,
-            'cobertura' => AppsApiCatalogo::coberturaTr(),
             'govOk' => $gov->appsHabilitados(),
-            'monitorResumo' => $monitor->resumo(),
+            'avisos' => $config->avisosImpacto(),
+            'featuresMeta' => AppsConfigService::FEATURES_META,
             'diagnostico' => $config->diagnosticoEndpoints(),
+            'cobertura' => AppsApiCatalogo::coberturaTr(),
+            'monitorResumo' => $monitor->resumo(),
         ]);
     }
 
@@ -86,8 +79,7 @@ class AppsConfigWebController extends Controller
             $features[$chave] = $request->boolean('features.'.$chave);
         }
 
-        $antes = $config->estadoAtual();
-        $estado = $config->salvar([
+        $config->salvar([
             'enabled' => $request->boolean('enabled'),
             'require_login' => $request->boolean('require_login'),
             'token_ttl_minutes' => (int) $request->input('token_ttl_minutes', 43200),
@@ -95,32 +87,8 @@ class AppsConfigWebController extends Controller
             'features' => $features,
         ]);
 
-        $gov->registrarEvento(
-            'config_salva',
-            'enabled='.($estado['enabled'] ? '1' : '0').' ttl='.$estado['token_ttl_minutes'],
-            null,
-            null,
-            [
-                'enabled' => $estado['enabled'],
-                'require_login' => $estado['require_login'],
-                'token_ttl_minutes' => $estado['token_ttl_minutes'],
-            ]
-        );
-
-        $avisos = $config->avisosImpacto(
-            (bool) $estado['enabled'],
-            $estado['features']
-        );
-        $novos = count(array_filter($avisos, static fn ($a) => $a['nivel'] !== 'ok'));
-
-        $msg = 'Configuração da Apps API salva.';
-        if (! $estado['enabled'] && $antes['enabled']) {
-            $msg .= ' API desligada — apps família/professor/admin recebem 503.';
-        } elseif ($novos > 0) {
-            $msg .= " {$novos} aviso(s) de funções indisponíveis — veja o painel.";
-        }
-
-        return redirect('/apps-api/configuracao')->with('ok', $msg);
+        return redirect('/apps-api/configuracao')
+            ->with('ok', 'Configuração da Apps API salva.');
     }
 
     public function previewImpacto(Request $request, AppsConfigService $config): View

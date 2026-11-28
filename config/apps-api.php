@@ -35,6 +35,7 @@ return [
     'features' => [
         'familia' => (bool) env('APPS_API_FEATURE_FAMILIA', true),
         'professor' => (bool) env('APPS_API_FEATURE_PROFESSOR', true),
+        'equipe' => (bool) env('APPS_API_FEATURE_EQUIPE', true),
         'admin' => (bool) env('APPS_API_FEATURE_ADMIN', true),
         'exportacao' => (bool) env('APPS_API_FEATURE_EXPORTACAO', true),
         'diario' => (bool) env('APPS_API_FEATURE_DIARIO', true),
@@ -53,6 +54,9 @@ return [
         'professor.horario' => (bool) env('APPS_API_FEATURE_PROFESSOR_HORARIO', true),
         'professor.eventos' => (bool) env('APPS_API_FEATURE_PROFESSOR_EVENTOS', true),
         'professor.historico' => (bool) env('APPS_API_FEATURE_PROFESSOR_HISTORICO', true),
+        'equipe.almox' => (bool) env('APPS_API_FEATURE_EQUIPE_ALMOX', true),
+        'equipe.biblioteca' => (bool) env('APPS_API_FEATURE_EQUIPE_BIBLIOTECA', true),
+        'equipe.contratacoes' => (bool) env('APPS_API_FEATURE_EQUIPE_CONTRATACOES', true),
     ],
 
     /*

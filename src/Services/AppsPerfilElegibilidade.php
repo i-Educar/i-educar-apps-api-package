@@ -5,6 +5,7 @@ namespace iEducar\Packages\BuritiAppsApi\Services;
 use App\Models\LegacySchoolClassTeacher;
 use App\Models\LegacyStudent;
 use App\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -23,8 +24,51 @@ final class AppsPerfilElegibilidade
             'admin' => $this->avaliarAdmin($user),
             'familia' => $this->avaliarFamilia($user),
             'professor' => $this->avaliarProfessor($user),
+            'equipe' => $this->avaliarEquipe($user),
             default => ['ok' => false, 'code' => 'perfil_invalido', 'message' => 'Perfil inválido'],
         };
+    }
+
+    /**
+     * Equipe técnica: servidor da rede (funcionário ativo) ou admin.
+     * Cobre almoxarifado, biblioteca, ACT e operações com QR.
+     *
+     * @return array{ok:bool,code:?string,message:?string}
+     */
+    private function avaliarEquipe(User $user): array
+    {
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return ['ok' => true, 'code' => null, 'message' => null];
+        }
+
+        try {
+            if (Schema::hasTable('portal.funcionario')) {
+                $ativo = DB::table('portal.funcionario')
+                    ->where('ref_cod_pessoa_fj', (int) $user->id)
+                    ->where('ativo', 1)
+                    ->exists();
+                if ($ativo) {
+                    return ['ok' => true, 'code' => null, 'message' => null];
+                }
+            }
+        } catch (Throwable) {
+            return ['ok' => true, 'code' => null, 'message' => null];
+        }
+
+        // Sem schema portal: libera para homologação de contrato.
+        try {
+            if (! Schema::hasTable('portal.funcionario')) {
+                return ['ok' => true, 'code' => null, 'message' => null];
+            }
+        } catch (Throwable) {
+            return ['ok' => true, 'code' => null, 'message' => null];
+        }
+
+        return [
+            'ok' => false,
+            'code' => 'forbidden_perfil',
+            'message' => 'Perfil equipe exige funcionário ativo da rede',
+        ];
     }
 
     /** @return array{ok:bool,code:?string,message:?string} */

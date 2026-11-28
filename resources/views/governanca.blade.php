@@ -14,7 +14,7 @@
     @else
         <span class="badge fail"><i class="fa fa-ban"></i> Apps suspensos</span>
     @endif
-    <a class="botao claro" href="{{ url('/apps-api/configuracao') }}"><i class="fa fa-sliders"></i> Configuração</a>
+    <a class="botao claro icone" href="{{ url('/apps-api/configuracao') }}" title="Configuração" aria-label="Configuração"><i aria-hidden="true" class="fa fa-sliders"></i></a>
 @endsection
 
 @section('conteudo')

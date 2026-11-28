@@ -16,7 +16,7 @@ final class Processos
     public static function titulos(): array
     {
         return [
-            self::RAIZ => 'Apps API',
+            self::RAIZ => 'APP e Governança',
             self::CONFIG => 'Configuração',
             self::FUNCOES => 'Funções disponíveis',
             self::GOVERNANCA => 'Governança',

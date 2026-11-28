@@ -42,6 +42,42 @@ final class AppsConfigService
                 'Governança remota via app admin fica bloqueada (CLI ainda funciona)',
             ],
         ],
+        'equipe' => [
+            'rotulo' => 'App Equipe técnica',
+            'descricao' => 'Rotas /equipe/* — almoxarifado (QR/etiquetas), biblioteca, contratações.',
+            'grupo' => 'perfil',
+            'impacto' => [
+                'Leitura de QR de remessa e baixa operacional ficam indisponíveis no celular',
+                'Consulta de empréstimos e processos ACT some do app unificado',
+            ],
+        ],
+        'equipe.almox' => [
+            'rotulo' => 'Equipe · Almoxarifado',
+            'descricao' => 'Pedidos, QR, etiquetas, saldos e confirmação de recebimento.',
+            'grupo' => 'equipe',
+            'depende' => 'equipe',
+            'impacto' => [
+                'Operação de estoque/remessa no app fica bloqueada',
+            ],
+        ],
+        'equipe.biblioteca' => [
+            'rotulo' => 'Equipe · Biblioteca',
+            'descricao' => 'GET /equipe/biblioteca/emprestimos.',
+            'grupo' => 'equipe',
+            'depende' => 'equipe',
+            'impacto' => [
+                'Lista de empréstimos some do app equipe',
+            ],
+        ],
+        'equipe.contratacoes' => [
+            'rotulo' => 'Equipe · Contratações (ACT)',
+            'descricao' => 'GET /equipe/contratacoes/processos.',
+            'grupo' => 'equipe',
+            'depende' => 'equipe',
+            'impacto' => [
+                'Consulta de processos seletivos some do app equipe',
+            ],
+        ],
         'exportacao' => [
             'rotulo' => 'Exportação (formatos TR 4.x)',
             'descricao' => 'GET /exportacao/formatos.',
@@ -358,6 +394,18 @@ final class AppsConfigService
         }
         if (str_starts_with($path, 'professor')) {
             return 'professor';
+        }
+        if (preg_match('#^equipe/almox/#', $path) || $path === 'equipe/almox/confirmar') {
+            return 'equipe.almox';
+        }
+        if (str_starts_with($path, 'equipe/biblioteca')) {
+            return 'equipe.biblioteca';
+        }
+        if (str_starts_with($path, 'equipe/contratacoes')) {
+            return 'equipe.contratacoes';
+        }
+        if (str_starts_with($path, 'equipe')) {
+            return 'equipe';
         }
         if (str_starts_with($path, 'admin')) {
             return 'admin';

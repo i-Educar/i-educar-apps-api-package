@@ -9,8 +9,8 @@
 @endsection
 
 @section('acoes-topo')
-    <a class="botao claro" href="{{ url('/apps-api/configuracao') }}"><i class="fa fa-sliders"></i> Voltar à configuração</a>
-    <a class="botao" href="{{ url('/apps-api/governanca') }}"><i class="fa fa-shield"></i> Governança</a>
+    <a class="botao claro icone" href="{{ url('/apps-api/configuracao') }}" title="Voltar à configuração" aria-label="Voltar à configuração"><i aria-hidden="true" class="fa fa-sliders"></i></a>
+    <a class="botao icone" href="{{ url('/apps-api/governanca') }}" title="Governança" aria-label="Governança"><i aria-hidden="true" class="fa fa-shield"></i></a>
 @endsection
 
 @section('conteudo')

@@ -4,14 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('titulo', 'Apps da rede')</title>
+    <title>@yield('titulo', 'APIs')</title>
     <link rel="stylesheet" href="{{ url('/intranet/styles/font-awesome.css') }}">
     <style>
         :root {
-            --cor: {{ $identidade['cor'] ?? '#0f5c6e' }};
-            --destaque: {{ $identidade['destaque'] ?? '#1a7f90' }};
-            --clara: {{ $identidade['clara'] ?? '#e7f4f6' }};
-            --nav: #122029; --nav-texto: #d5e0e6; --fundo: #e9eef1;
+            --cor: {{ $identidade['cor'] ?? '#2f6bff' }};
+            --destaque: {{ $identidade['destaque'] ?? '#5b8cff' }};
+            --clara: {{ $identidade['clara'] ?? '#eaf0ff' }};
+            --nav: #122029; --nav-texto: #e8eef3; --fundo: #e9eef1;
             --tinta: #1a242b; --suave: #5b6b76; --linha: #cfd8df;
             --ok: #17663f; --ok-fundo: #e5f6ec; --erro: #9b2c2c; --erro-fundo: #fdeceb;
             --ambar: #b86e00; --cor-tela: var(--cor);
@@ -34,12 +34,13 @@
         .modulo a { display: flex; align-items: center; gap: 10px; color: var(--nav-texto); text-decoration: none; border-radius: 10px; padding: 9px 10px; }
         .modulo a i { width: 18px; text-align: center; opacity: .9; }
         .modulo a small { display: block; font-size: .68rem; font-weight: 500; color: #8aa0ad; margin-top: 1px; }
-        .modulo a:hover, .modulo a.ativo { background: color-mix(in srgb, var(--cor) 82%, #fff); color: #fff; font-weight: 700; }
+        .modulo a:hover { background: color-mix(in srgb, var(--cor) 42%, rgba(255,255,255,.08)); color: #fff; }
+        .modulo a.ativo { background: color-mix(in srgb, var(--cor) 68%, #060b10); color: #fff; font-weight: 700; box-shadow: inset 3px 0 0 var(--destaque, var(--cor)); }
         .modulo a.ativo small { color: rgba(255,255,255,.78); }
         .miolo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         main { padding: 18px 20px 36px; flex: 1; }
         .cabeca-tela { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: -18px -20px 16px; padding: 14px 16px 14px 20px;
-            background: linear-gradient(120deg, color-mix(in srgb, var(--clara) 72%, #fff), #fff 58%); border-bottom: 1px solid var(--linha); border-left: 4px solid var(--cor-tela); }
+            background: linear-gradient(120deg, color-mix(in srgb, var(--clara) 72%, var(--superficie, #fff)), #fff 58%); border-bottom: 1px solid var(--linha); border-left: 4px solid var(--cor-tela); }
         .identidade-tela { display: flex; align-items: center; gap: 12px; }
         .marca-tela { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(145deg, var(--destaque), var(--cor-tela)); color: #fff; font-size: 18px; box-shadow: 0 10px 20px color-mix(in srgb, var(--cor-tela) 24%, transparent); }
         .cabeca-tela h1 { margin: 0; font-size: 1.22rem; font-weight: 700; }
@@ -47,7 +48,7 @@
         .acoes-tela { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
         .botao { display: inline-flex; align-items: center; gap: 8px; background: var(--cor-tela); color: #fff; border: 0; border-radius: 11px; padding: 9px 13px; font: inherit; text-decoration: none; cursor: pointer; transition: transform .12s ease, filter .12s ease; }
         .botao:hover { filter: brightness(1.05); transform: translateY(-1px); }
-        .botao.claro { background: #fff; color: var(--cor-tela); border: 1px solid color-mix(in srgb, var(--cor-tela) 30%, var(--linha)); }
+        .botao.claro { background: var(--superficie, #fff); color: var(--cor-tela); border: 1px solid color-mix(in srgb, var(--cor-tela) 30%, var(--linha)); }
         .botao.perigo { background: var(--erro); }
         .botao:disabled { opacity: .5; cursor: not-allowed; transform: none; }
         .flash { border-radius: 12px; padding: 12px 14px; margin: 0 0 16px; }
@@ -58,26 +59,26 @@
         .fluxo-passos a {
             display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center;
             padding: 12px 14px; border-radius: 14px; text-decoration: none; color: var(--tinta);
-            background: #fff; border: 1px solid var(--linha); box-shadow: 0 8px 18px rgba(21,34,43,.03);
+            background: var(--superficie, #fff); border: 1px solid var(--linha); box-shadow: 0 8px 18px rgba(21,34,43,.03);
             transition: border-color .15s ease, transform .15s ease;
         }
         .fluxo-passos a:hover { border-color: color-mix(in srgb, var(--cor) 40%, var(--linha)); transform: translateY(-1px); }
-        .fluxo-passos a.ativo { border-color: color-mix(in srgb, var(--cor) 45%, var(--linha)); background: linear-gradient(180deg, color-mix(in srgb, var(--clara) 70%, #fff), #fff); }
-        .fluxo-passos .num {
+        .fluxo-passos a.ativo { border-color: color-mix(in srgb, var(--cor) 45%, var(--linha)); background: linear-gradient(180deg, color-mix(in srgb, var(--clara) 70%, var(--mix-branco, #fff)), var(--superficie, #fff)); }
+        .fluxo-passos .ico {
             width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
-            background: color-mix(in srgb, var(--clara) 80%, #fff); color: var(--cor); font-weight: 800; font-size: .85rem;
+            background: color-mix(in srgb, var(--clara) 80%, var(--superficie, #fff)); color: var(--cor); font-size: .95rem;
         }
-        .fluxo-passos a.ativo .num { background: var(--cor); color: #fff; }
+        .fluxo-passos a.ativo .ico { background: var(--cor); color: #fff; }
         .fluxo-passos strong { display: block; font-size: .9rem; }
         .fluxo-passos small { display: block; color: var(--suave); font-size: .74rem; margin-top: 2px; font-weight: 500; }
 
         .hero-status {
             display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;
             padding: 16px 18px; border-radius: 16px; margin: 0 0 16px;
-            background: linear-gradient(120deg, color-mix(in srgb, var(--clara) 65%, #fff), #fff);
+            background: linear-gradient(120deg, color-mix(in srgb, var(--clara) 65%, var(--superficie, #fff)), var(--superficie, #fff));
             border: 1px solid color-mix(in srgb, var(--cor) 18%, var(--linha));
         }
-        .hero-status.suspenso { border-color: color-mix(in srgb, var(--erro) 35%, #fff); background: linear-gradient(120deg, #fff5f4, #fff); }
+        .hero-status.suspenso { border-color: color-mix(in srgb, var(--erro) 35%, var(--superficie, #fff)); background: linear-gradient(120deg, #fff5f4, var(--superficie, #fff)); }
         .hero-status .lado { display: flex; gap: 12px; align-items: center; min-width: 0; }
         .hero-status .bolha {
             width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; color: #fff; font-size: 1.15rem;
@@ -90,17 +91,17 @@
         .numeros { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 10px; margin: 0 0 16px; }
         .numeros article {
             --tom: var(--cor);
-            background: #fff; border: 1px solid color-mix(in srgb, var(--tom) 22%, var(--linha));
+            background: var(--superficie, #fff); border: 1px solid color-mix(in srgb, var(--tom) 22%, var(--linha));
             border-radius: 14px; padding: 12px 14px; box-shadow: 0 8px 16px rgba(21,34,43,.03);
         }
         .numeros .kpi-ico {
             width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; margin: 0 0 8px;
-            background: color-mix(in srgb, var(--tom) 12%, #fff); color: var(--tom);
+            background: color-mix(in srgb, var(--tom) 12%, var(--superficie, #fff)); color: var(--tom);
         }
         .numeros span { display: block; color: var(--suave); font-size: .72rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
         .numeros strong { font-size: 1.28rem; letter-spacing: -.02em; }
 
-        .bloco { background: #fff; border: 1px solid var(--linha); border-radius: 16px; padding: 16px 18px; margin: 0 0 14px; box-shadow: 0 10px 24px rgba(21,34,43,.035); }
+        .bloco { background: var(--superficie, #fff); border: 1px solid var(--linha); border-radius: 16px; padding: 16px 18px; margin: 0 0 14px; box-shadow: 0 10px 24px rgba(21,34,43,.035); }
         .bloco.passo { border-top: 3px solid var(--cor-tela); }
         .bloco h2 { margin: 0 0 6px; display: flex; align-items: center; gap: 8px; font-size: 1.02rem; }
         .bloco .sub { margin: 0 0 14px; color: var(--suave); font-size: .86rem; }
@@ -117,7 +118,7 @@
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; align-items: end; }
         .form-grid label { display: grid; gap: 4px; font-size: .8rem; font-weight: 700; color: var(--suave); }
-        .form-grid input, .form-grid select, .form-grid textarea { min-height: 38px; padding: 7px 10px; border: 1px solid var(--linha); border-radius: 10px; font: inherit; background: #fff; }
+        .form-grid input, .form-grid select, .form-grid textarea { min-height: 38px; padding: 7px 10px; border: 1px solid var(--linha); border-radius: 10px; font: inherit; background: var(--superficie, #fff); }
         .form-grid textarea { min-height: 72px; resize: vertical; }
         .form-grid .col-wide { grid-column: 1 / -1; }
         .form-grid .acoes { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
@@ -127,7 +128,7 @@
             border: 1px solid var(--linha); border-radius: 14px; background: #fbfcfd;
             transition: border-color .15s ease, background .15s ease;
         }
-        .switch:hover { border-color: color-mix(in srgb, var(--cor) 30%, var(--linha)); background: #fff; }
+        .switch:hover { border-color: color-mix(in srgb, var(--cor) 30%, var(--linha)); background: var(--superficie, #fff); }
         .switch input { width: 18px; height: 18px; margin-top: 2px; flex: none; accent-color: var(--cor); }
         .switch .txt strong { display: block; color: var(--tinta); font-size: .9rem; }
         .switch .txt small { color: var(--suave); font-weight: 500; line-height: 1.35; }
@@ -160,7 +161,7 @@
 
         .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
         .chips a, .chips button {
-            appearance: none; border: 1px solid var(--linha); background: #fff; color: var(--suave);
+            appearance: none; border: 1px solid var(--linha); background: var(--superficie, #fff); color: var(--suave);
             border-radius: 999px; padding: 6px 12px; font: inherit; font-size: .78rem; font-weight: 700;
             text-decoration: none; cursor: pointer;
         }
@@ -168,14 +169,14 @@
 
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--linha); font-size: .85rem; }
-        th { background: color-mix(in srgb, var(--clara) 70%, #fff); color: var(--cor); font-weight: 700; }
+        th { background: color-mix(in srgb, var(--clara) 70%, var(--mix-branco, #fff)); color: var(--cor); font-weight: 700; }
         tr.off { opacity: .55; background: #fafafa; }
         code { font-size: .8rem; background: #f3f6f8; padding: 2px 6px; border-radius: 6px; }
 
         .atalho-card {
             display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;
             padding: 14px 16px; border-radius: 14px; border: 1px dashed color-mix(in srgb, var(--cor) 28%, var(--linha));
-            background: color-mix(in srgb, var(--clara) 45%, #fff); margin: 0 0 14px;
+            background: color-mix(in srgb, var(--clara) 45%, var(--superficie, #fff)); margin: 0 0 14px;
         }
         .atalho-card p { margin: 2px 0 0; color: var(--suave); font-size: .84rem; }
         .atalho-card h3 { margin: 0; font-size: .95rem; }
@@ -199,17 +200,17 @@
         </a>
         <nav class="modulo">
             <div class="modulo-nome">Fluxo</div>
-            <a href="{{ url('/apps-api/configuracao') }}" class="@if(request()->is('apps-api/configuracao')) ativo @endif">
+            <a href="{{ url('/apps-api/configuracao') }}" class="@if(request()->is('apps-api/configuracao*')) ativo @endif">
                 <i class="fa fa-sliders"></i>
-                <span>1. Configurar<small>API, tokens e funções</small></span>
+                <span>Configurar<small>API, tokens e funções</small></span>
             </a>
             <a href="{{ url('/apps-api/funcoes') }}" class="@if(request()->is('apps-api/funcoes')) ativo @endif">
                 <i class="fa fa-list-alt"></i>
-                <span>2. Revisar funções<small>O que cada app usa</small></span>
+                <span>Revisar funções<small>O que cada app usa</small></span>
             </a>
             <a href="{{ url('/apps-api/governanca') }}" class="@if(request()->is('apps-api/governanca*')) ativo @endif">
                 <i class="fa fa-shield"></i>
-                <span>3. Governar acessos<small>Tokens e suspensões</small></span>
+                <span>Governar acessos<small>Tokens e suspensões</small></span>
             </a>
         </nav>
         <nav class="modulo">
@@ -221,7 +222,7 @@
     <div class="miolo">
         @php
             $homeModulo = url('/apps-api/configuracao');
-            $nomeModulo = $identidade['nome'] ?? 'Apps da rede';
+            $nomeModulo = $identidade['nome'] ?? 'APIs';
             $descricaoModulo = $identidade['descricao'] ?? null;
             $menuGrupos = [
                 [
@@ -249,27 +250,37 @@
                         @endif
                     </div>
                 </div>
-                <div class="acoes-tela">@yield('acoes-topo')</div>
+                <div class="acoes-tela">
+                    @yield('acoes-topo')
+                    @includeWhen(View::exists('buriti-ui::informes-modulo'), 'buriti-ui::informes-modulo')
+                </div>
             </header>
 
-            <nav class="fluxo-passos" aria-label="Passos do módulo">
-                <a href="{{ url('/apps-api/configuracao') }}" class="@if(request()->is('apps-api/configuracao')) ativo @endif">
-                    <span class="num">1</span>
+            @hasSection('foco')
+                @yield('foco')
+            @endif
+            @hasSection('trilho')
+                <nav class="buriti-trilho" aria-label="Ações da tela">@yield('trilho')</nav>
+            @endif
+
+            <nav class="fluxo-passos" aria-label="Atalhos do módulo">
+                <a href="{{ url('/apps-api/configuracao') }}" class="@if(request()->is('apps-api/configuracao*')) ativo @endif">
+                    <span class="ico" aria-hidden="true"><i class="fa fa-sliders"></i></span>
                     <span><strong>Configurar</strong><small>Ligar API e escolher funções</small></span>
                 </a>
                 <a href="{{ url('/apps-api/funcoes') }}" class="@if(request()->is('apps-api/funcoes')) ativo @endif">
-                    <span class="num">2</span>
+                    <span class="ico" aria-hidden="true"><i class="fa fa-list-alt"></i></span>
                     <span><strong>Revisar funções</strong><small>Ver o que fica disponível</small></span>
                 </a>
                 <a href="{{ url('/apps-api/governanca') }}" class="@if(request()->is('apps-api/governanca*')) ativo @endif">
-                    <span class="num">3</span>
+                    <span class="ico" aria-hidden="true"><i class="fa fa-shield"></i></span>
                     <span><strong>Governar</strong><small>Tokens, bloqueios e pessoas</small></span>
                 </a>
             </nav>
 
             @yield('conteudo')
         </main>
-        @include('buriti-ui::rodape', ['moduloRodape' => 'Apps da rede'])
+        @include('buriti-ui::rodape', ['moduloRodape' => 'APIs'])
     </div>
 </div>
 </body>

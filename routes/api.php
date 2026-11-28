@@ -4,6 +4,7 @@ use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsAdminController;
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsAuthController;
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsBuscaAtivaController;
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsCatalogoController;
+use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsEquipeController;
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsFamiliaController;
 use iEducar\Packages\BuritiAppsApi\Http\Controllers\AppsProfessorController;
 use iEducar\Packages\BuritiAppsApi\Http\Middleware\EnsureAppsApiEnabled;
@@ -55,6 +56,19 @@ Route::prefix('api/apps/v1')->group(function (): void {
                 Route::post('notas', [AppsProfessorController::class, 'notas']);
                 Route::get('horario', [AppsProfessorController::class, 'horario']);
                 Route::get('eventos', [AppsProfessorController::class, 'eventos']);
+            });
+
+            Route::middleware(EnsureAppsPerfil::class.':equipe')->prefix('equipe')->group(function (): void {
+                Route::get('painel', [AppsEquipeController::class, 'painel']);
+                Route::get('almox/pedidos', [AppsEquipeController::class, 'almoxPedidos']);
+                Route::get('almox/pedidos/{id}', [AppsEquipeController::class, 'almoxPedido'])->whereNumber('id');
+                Route::get('almox/pedidos/{id}/qr', [AppsEquipeController::class, 'almoxQr'])->whereNumber('id');
+                Route::get('almox/pedidos/{id}/etiquetas', [AppsEquipeController::class, 'almoxEtiquetas'])->whereNumber('id');
+                Route::post('almox/confirmar', [AppsEquipeController::class, 'almoxConfirmar']);
+                Route::post('almox/pedidos/{id}/assinar', [AppsEquipeController::class, 'almoxAssinar'])->whereNumber('id');
+                Route::get('almox/saldos', [AppsEquipeController::class, 'almoxSaldos']);
+                Route::get('biblioteca/emprestimos', [AppsEquipeController::class, 'bibliotecaEmprestimos']);
+                Route::get('contratacoes/processos', [AppsEquipeController::class, 'contratacoesProcessos']);
             });
 
             Route::middleware(EnsureAppsPerfil::class.':admin')->prefix('admin')->group(function (): void {

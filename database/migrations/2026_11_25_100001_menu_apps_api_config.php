@@ -28,7 +28,7 @@ return new class extends Migration
 
         $raiz = Menu::query()->updateOrCreate(['process' => Processos::RAIZ], [
             'parent_id' => $configuracoes->getKey(),
-            'title' => 'Apps API',
+            'title' => 'APP e Governança',
             'description' => 'Configuração Sanctum e funções dos apps',
             'link' => '/apps-api/configuracao',
             'icon' => 'fa-mobile',

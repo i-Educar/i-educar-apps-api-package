@@ -24,7 +24,7 @@ class AppsAuthController
     public function status(): JsonResponse
     {
         $perfis = [];
-        foreach (['familia', 'professor', 'admin'] as $perfil) {
+        foreach (['familia', 'professor', 'equipe', 'admin'] as $perfil) {
             if ($this->config->featureAtiva($perfil)) {
                 $perfis[] = $perfil;
             }
@@ -61,7 +61,7 @@ class AppsAuthController
         $data = $request->validate([
             'login' => 'required|string',
             'password' => 'required|string',
-            'perfil' => 'required|in:familia,professor,admin',
+            'perfil' => 'required|in:familia,professor,equipe,admin',
             'device_name' => 'required|string|min:3|max:120',
         ]);
 
