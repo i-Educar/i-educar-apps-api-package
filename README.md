@@ -1,36 +1,56 @@
-# Apps API — pais/professores (TR 5.13 + 5.14)
+# Apps API (família e professor)
 
-Pacote Buriti para o i-Educar **2.12**. Backend único (**Sanctum**) para os apps Android/iOS.
+Backend único (Laravel Sanctum) que expõe, em contrato versionado, os dados e operações necessários aos apps mobile de responsáveis e professores.
 
-Repo: https://github.com/i-Educar/i-educar-apps-api-package
+Composer: `buriti/i-educar-apps-api-package`
+
+## Para que serve
+
+Este pacote **não** inclui UI mobile nem publicação em lojas. Entrega a API estável para que outra equipe construa Android/iOS/PWA, com governança SME (suspender usuário, bloquear município, tokens).
+
+## Desenho de funções
+
+| Função | Entrega |
+| --- | --- |
+| Autenticação | Login/logout, perfil (família/professor), dispositivos e status |
+| Catálogo de capacidades | Descoberta do que o município liberou no app |
+| Família | Filhos, frequência, notas, cardápio, transporte, fila, uniforme, atendimento, biblioteca, busca ativa |
+| Professor | Dados e operações do diário / rotina docente via API |
+| Governança SME | Suspender/reativar usuário, revogar token, bloquear/liberar município |
+| OpenAPI | Contrato em `docs/openapi-apps-v1.yaml` |
+
+## Quem usa
+
+- Equipe mobile (consumidora da API)
+- SME (governança)
+- Famílias e professores (via app)
+
+## Integrações
+
+- Alimentação, transporte, busca ativa, atendimento, biblioteca, pré-matrícula, i-Diário/núcleo escolar
+- Sanctum no i-Educar
 
 ## Compatibilidade
 
 | Produto | Versão |
 | --- | --- |
-| **i-Educar** | **2.12.x** (min. 2.12.0) |
-| **i-Diário** | Portabilis i-Diário (espelho Laguna) via API/SSO do core |
-| Pacote | `0.6.0` |
+| **i-Educar** | **2.12.x** |
+| **i-Diário** | Portabilis i-Diário (API / SSO do núcleo) |
+| Pacote | `0.6.1` |
 
-Declarado em `composer.json` → `extra.ieducar` e `extra.idiario`.
+Declarado em `composer.json` → `extra.ieducar` / `extra.idiario`.
 
-## Onda 5 (atual — governança)
+## Documentação
 
-```bash
-php packages/buriti/i-educar-apps-api-package/tests/run.php
-# público: GET  /api/apps/v1/auth/status
-# login:   POST /api/apps/v1/auth/login {login,password,perfil,device_name}
-# dados:   Bearer obrigatório (família/professor)
-# admin:   suspender usuário / bloquear município
-php artisan apps-api:suspender-usuario MATRICULA
-php artisan apps-api:bloquear-municipio --mensagem="..."
-```
+| Documento | Uso |
+| --- | --- |
+| [`EPIC.md`](./EPIC.md) | Escopo de produto, aceite e critérios |
+| [`ROADMAP.md`](./ROADMAP.md) | Fases e entregas |
+| [`TODO.md`](./TODO.md) | Backlog operacional |
+| [`docs/openapi-apps-v1.yaml`](./docs/openapi-apps-v1.yaml) | Contrato OpenAPI v1 |
+| [`docs/ROADMAP-ANDROID.md`](./docs/ROADMAP-ANDROID.md) | Orientação para time mobile |
+| [`REQUISITOS-TR.md`](./REQUISITOS-TR.md) | Rastreio de requisitos (planejamento) |
 
-- Onda 5: [`docs/onda-5/STATUS.md`](./docs/onda-5/STATUS.md)
-- OpenAPI: [`docs/openapi-apps-v1.yaml`](./docs/openapi-apps-v1.yaml)
-- Handoff: [`docs/onda-3/HANDOFF-5.13-5.14.md`](./docs/onda-3/HANDOFF-5.13-5.14.md)
-- Roadmap Android: [`docs/ROADMAP-ANDROID.md`](./docs/ROADMAP-ANDROID.md)
+---
 
-## Prefixo
-
-`/api/apps/v1/...` — catálogo alinhado às rotas (sem endpoints fantasmas).
+Licença: **GPL-2.0-or-later** · Organização [i-Educar](https://github.com/i-Educar)
